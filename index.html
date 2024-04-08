@@ -138,35 +138,39 @@
         </table>
         
         <script>
-            function filterData() {
-                const groupFilter = document.getElementById('group').value;
-                const projectFilter = document.getElementById('project').value;
-                const unionFilter = document.getElementById('union').value;
-        
-                const fileInput = document.getElementById('fileInput');
-                const file = fileInput.files[0];
-                const reader = new FileReader();
-        
-                reader.onload = function(e) {
-                    const data = e.target.result;
-                    const workbook = XLSX.read(data, {type: 'binary'});
-                    const sheetName = workbook.SheetNames[0];
-                    const sheet = workbook.Sheets[sheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(sheet);
-        
-                    const filteredData = jsonData.filter(row => {
-                        if (groupFilter && row['组别'] !== groupFilter) return false;
-                        if (projectFilter && !row['个人项目'].includes(projectFilter)) return false;
-                        if (unionFilter && row['所属工会'] !== unionFilter) return false;
-                        return true;
-                    });
-        
-                    displayData(filteredData);
-                    updateTableHeader(groupFilter, projectFilter, filteredData.length);
-                };
-        
-                reader.readAsBinaryString(file);
-            }
+            document.getElementById('group').addEventListener('change', filterData);
+    document.getElementById('project').addEventListener('change', filterData);
+    document.getElementById('union').addEventListener('change', filterData);
+
+    function filterData() {
+        const groupFilter = document.getElementById('group').value;
+        const projectFilter = document.getElementById('project').value;
+        const unionFilter = document.getElementById('union').value;
+
+        const fileInput = document.getElementById('fileInput');
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            const data = e.target.result;
+            const workbook = XLSX.read(data, {type: 'binary'});
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+            const filteredData = jsonData.filter(row => {
+                if (groupFilter && row['组别'] !== groupFilter) return false;
+                if (projectFilter && !row['个人项目'].includes(projectFilter)) return false;
+                if (unionFilter && row['所属工会'] !== unionFilter) return false;
+                return true;
+            });
+
+            displayData(filteredData);
+            updateTableHeader(groupFilter, projectFilter, filteredData.length);
+        };
+
+        reader.readAsBinaryString(file);
+    }
         
             function displayData(data) {
             const tableBody = document.getElementById('dataBody');
