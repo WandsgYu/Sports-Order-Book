@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>运动会数据筛选(秩序册)</title>
+<style>
+    table {
+        border-collapse: collapse;
+        width: 1000px; /* 设置表格宽度为80px */
+    }
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+    th:nth-child(1), td:nth-child(1) {
+        width: 250px; 
+    }
+    th:nth-child(2), td:nth-child(2) {
+        width: 550px; /* 第二列宽度为700px */
+    }
+    .copy-button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .copy-button:hover {
+        background-color: #45a049;
+    }
+    .popup {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: #333;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        display: none;
+    }
+</style>
+</head>
+<body>
+<h2>运动会数据筛选(秩序册)</h2>
+<input type="file" id="fileInput">
+<br><br>
+<label for="group">组别：</label>
+<select id="group">
+    <option value="">全部</option>
+    <option value="男子甲组" selected>男子甲组</option>
+    <option value="男子乙组">男子乙组</option>
+    <option value="女子甲组">女子甲组</option>
+    <option value="女子乙组">女子乙组</option>
+</select>
+<label for="project">项目：</label>
+<select id="project">
+    <option value="">全部</option>
+    <option value="定时投篮" selected>定时投篮</option>
+    <option value="摸石过河">摸石过河</option>
+    <option value="托球跑">托球跑</option>
+    <option value="跳小绳">跳小绳</option>
+    <option value="踢毽子">踢毽子</option>
+    <option value="滚铁环">滚铁环</option>
+    <option value="铅球">铅球</option>
+    <option value="赶鸭子">赶鸭子</option>
+</select>
+<label for="union">单位：</label>
+<select id="union">
+    <option value="" selected>全部</option>
+    <option value="电子工程学院分工会">电子工程学院分工会</option>
+    <option value="后勤集团分工会">后勤集团分工会</option>
+    <option value="机关分工会">机关分工会</option>
+    <option value="计算机学院分工会">计算机学院分工会</option>
+    <option value="经管学院分工会">经管学院分工会</option>
+    <option value="理学院分工会">理学院分工会</option>
+    <option value="马克思学院分工会">马克思学院分工会</option>
+    <option value="人文与外国语学院分工会">人文与外国语学院分工会</option>
+    <option value="数字艺术学院分工会">数字艺术学院分工会</option>
+    <option value="通信学院分工会">通信学院分工会</option>
+    <option value="图书信息分工会">图书信息分工会</option>
+    <option value="网络安全分工会">网络安全分工会</option>
+    <option value="现代邮政学院分工会">现代邮政学院分工会</option>
+    <option value="自动化学院分工会" >自动化学院分工会</option>
+</select>
+<button onclick="filterData()">确定</button>
+<button class="copy-button" onclick="copyTable()">复制表格</button>
+
+
+<table id="dataTable">
+    <thead id="tableHeader">
+        <!-- 表头由JavaScript动态生成 -->
+    </thead>
+    <tbody id="dataBody">
+    </tbody>
+</table>
+
+<script>
+    function filterData() {
+        const groupFilter = document.getElementById('group').value;
+        const projectFilter = document.getElementById('project').value;
+        const unionFilter = document.getElementById('union').value;
+
+        const fileInput = document.getElementById('fileInput');
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            const data = e.target.result;
+            const workbook = XLSX.read(data, {type: 'binary'});
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+            const filteredData = jsonData.filter(row => {
+                if (groupFilter && row['组别'] !== groupFilter) return false;
+                if (projectFilter && !row['个人项目'].includes(projectFilter)) return false;
+                if (unionFilter && row['所属工会'] !== unionFilter) return false;
+                return true;
+            });
+
+            displayData(filteredData);
+            updateTableHeader(groupFilter, projectFilter, filteredData.length);
+        };
+
+        reader.readAsBinaryString(file);
+    }
+
+    function displayData(data) {
+    const tableBody = document.getElementById('dataBody');
+    tableBody.innerHTML = '';
+
+    const unitMap = new Map(); // Map to store unit wise data
+    data.forEach(row => {
+        const units = row['所属工会'].split(','); // Split units if more than one
+        units.forEach(unit => {
+            if (!unitMap.has(unit)) {
+                unitMap.set(unit, []);
+            }
+            unitMap.get(unit).push(row['姓名']);
+        });
+    });
+
+    unitMap.forEach((people, unit) => {
+        const tr = document.createElement('tr');
+        const tdUnit = document.createElement('td');
+        const tdPeople = document.createElement('td');
+        const numPeople = people.length; // Get the number of people in the unit
+        tdUnit.textContent = unit + '(' + numPeople + ')'; // Append number of people to the unit name
+        tdPeople.textContent = people.join(', ');
+        tr.appendChild(tdUnit);
+        tr.appendChild(tdPeople);
+        tableBody.appendChild(tr);
+    });
+}
+
+function updateTableHeader(group, project, numPeople) {
+    const tableHeader = document.getElementById('tableHeader');
+    tableHeader.innerHTML = ''; // 清除之前的表头内容
+    const th = document.createElement('th');
+    th.textContent = `${group}“${project}”(${numPeople}人)`;
+    th.colSpan = 2; // 跨越两列
+    th.style.textAlign = 'center'; // 设置居中显示
+    const tr = document.createElement('tr');
+    tr.appendChild(th);
+    tableHeader.appendChild(tr);
+}
+function copyTable() {
+    const dataTable = document.getElementById('dataTable');
+    const range = document.createRange();
+    range.selectNode(dataTable);
+    window.getSelection().removeAllRanges(); // 清除之前的选择
+    window.getSelection().addRange(range); // 选择表格内容
+    document.execCommand('copy'); // 复制表格内容到剪贴板
+    window.getSelection().removeAllRanges(); // 清除选择
+ 
+}
+
+</script>
+
+<!-- 引入 XLSX 库 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+</body>
+</html>
