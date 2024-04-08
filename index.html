@@ -127,6 +127,7 @@
         <button onclick="filterData()">确定</button>
         <button class="copy-button" onclick="copyTable()">复制表格</button>
         <strong>粘贴前需要提前设置excel表格的宽度</strong>
+        <div class="popup" id="popup">表格已成功复制到剪贴板！</div>
         
         
         <table id="dataTable">
@@ -219,7 +220,15 @@
             window.getSelection().addRange(range); // 选择表格内容
             document.execCommand('copy'); // 复制表格内容到剪贴板
             window.getSelection().removeAllRanges(); // 清除选择
-         
+
+            // 显示弹窗
+            const popup = document.getElementById('popup');
+            popup.style.display = 'block';
+
+            // 3秒后隐藏弹窗
+            setTimeout(function() {
+                popup.style.display = 'none';
+            }, 3000);
         }
         
         </script>
